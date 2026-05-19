@@ -33,6 +33,26 @@ IF SCHEMA_ID('TastyBytes') IS NULL
     EXEC('CREATE SCHEMA TastyBytes');
 GO
 
+IF SCHEMA_ID('etl_results') IS NULL
+    EXEC('CREATE SCHEMA etl_results');
+GO
+
+-- --------------------------------------------------------------------------
+-- ETL audit log
+-- Used by the SSIS package(s) to record start/end markers for each run.
+-- The package executes:
+--   INSERT INTO etl_results.etl_logs(name, execution_date)
+--   VALUES ('start execution', CURRENT_TIMESTAMP);
+--   INSERT INTO etl_results.etl_logs(name, execution_date)
+--   VALUES ('endexecution',    CURRENT_TIMESTAMP);
+-- --------------------------------------------------------------------------
+CREATE TABLE etl_results.etl_logs (
+    LogID           INT IDENTITY(1,1) PRIMARY KEY,
+    name            NVARCHAR(200) NOT NULL,
+    execution_date  DATETIME NOT NULL
+);
+GO
+
 -- EWI: TS0002 — ANSI_PADDING OFF not supported in Snowflake
 SET ANSI_PADDING OFF;
 GO
@@ -162,14 +182,16 @@ GO
 
 -- --------------------------------------------------------------------------
 -- 7. OrderHeader
---    EWI triggers: DATETIME2, DATETIMEOFFSET
+--    CompletedAt changed from DATETIMEOFFSET to DATETIME so the cloud data
+--    migration ODBC/Arrow worker can convert the column without ArrowTypeError.
+--    Timezone information is dropped intentionally.
 -- --------------------------------------------------------------------------
 CREATE TABLE TastyBytes.OrderHeader (
     OrderID         INT IDENTITY(1,1) PRIMARY KEY,
     CustomerID      INT NOT NULL,
     TruckID         INT NOT NULL,
     OrderDate       DATETIME NOT NULL DEFAULT GETDATE(),
-    CompletedAt     DATETIMEOFFSET NULL,
+    CompletedAt     DATETIME NULL,
     OrderStatus     VARCHAR(20) NOT NULL DEFAULT 'Pending',
     TotalAmount     MONEY NOT NULL DEFAULT 0.00,
     TipAmount       MONEY NULL DEFAULT 0.00,
@@ -222,14 +244,18 @@ GO
 
 -- --------------------------------------------------------------------------
 -- 10. EmployeeShift
+--    StartTime/EndTime changed from TIME to DATETIME so the cloud data
+--    migration ODBC/Arrow worker can convert these columns. The HoursWorked
+--    computed column still works correctly because DATEDIFF(MINUTE, ...) is
+--    valid on DATETIME values.
 -- --------------------------------------------------------------------------
 CREATE TABLE TastyBytes.EmployeeShift (
     ShiftID         INT IDENTITY(1,1) PRIMARY KEY,
     EmployeeName    NVARCHAR(200) NOT NULL,
     TruckID         INT NOT NULL,
     ShiftDate       DATE NOT NULL,
-    StartTime       TIME NOT NULL,
-    EndTime         TIME NOT NULL,
+    StartTime       DATETIME NOT NULL,
+    EndTime         DATETIME NOT NULL,
     HoursWorked     AS (DATEDIFF(MINUTE, StartTime, EndTime) / 60.0),
     Role            VARCHAR(50) NOT NULL DEFAULT 'Cook',
     HourlyRate      SMALLMONEY NOT NULL,
@@ -370,37 +396,11 @@ GO
 -- ============================================================================
 
 -- --------------------------------------------------------------------------
--- 1. fn_CalculateTax — scalar UDF, CONVERT with style
---    EWI triggers: FDM-TS0009 (CONVERT style)
--- --------------------------------------------------------------------------
-CREATE FUNCTION TastyBytes.fn_CalculateTax
-(
-    @Amount     MONEY,
-    @CountryID  INT
-)
-RETURNS MONEY
-AS
-BEGIN
-    DECLARE @TaxRate DECIMAL(5,2);
-    DECLARE @TaxAmount MONEY;
-    DECLARE @TaxDateStr VARCHAR(30);
-
-    SELECT @TaxRate = TaxRate
-    FROM TastyBytes.Country
-    WHERE CountryID = @CountryID;
-
-    SET @TaxRate = ISNULL(@TaxRate, 0.00);
-    SET @TaxAmount = @Amount * (@TaxRate / 100.0);
-
-    -- CONVERT with style 1 triggers FDM-TS0009
-    SET @TaxDateStr = CONVERT(VARCHAR(30), GETDATE(), 121);
-
-    RETURN @TaxAmount;
-END;
-GO
-
--- --------------------------------------------------------------------------
--- 2. fn_GetTruckRevenue — inline table-valued function with CROSS APPLY
+-- 2. fn_GetTruckRevenue — scalar UDF
+--    Converted from inline TVF to a scalar function. Returns the total
+--    revenue (sum of TotalAmount) for a given truck within a date range,
+--    counting only completed orders. Callers that previously consumed the
+--    TVF row set should now SUM externally or use this aggregate directly.
 -- --------------------------------------------------------------------------
 CREATE FUNCTION TastyBytes.fn_GetTruckRevenue
 (
@@ -408,29 +408,19 @@ CREATE FUNCTION TastyBytes.fn_GetTruckRevenue
     @StartDate  DATE,
     @EndDate    DATE
 )
-RETURNS TABLE
+RETURNS MONEY
 AS
-RETURN
-(
-    SELECT
-        oh.OrderID,
-        oh.OrderDate,
-        oh.TotalAmount,
-        oh.TipAmount,
-        DetailSummary.TotalItems,
-        DetailSummary.TotalLineValue
+BEGIN
+    DECLARE @Revenue MONEY;
+
+    SELECT @Revenue = ISNULL(SUM(oh.TotalAmount), 0)
     FROM TastyBytes.OrderHeader oh
-    CROSS APPLY (
-        SELECT
-            SUM(od.Quantity)                     AS TotalItems,
-            SUM(od.Quantity * od.UnitPrice)      AS TotalLineValue
-        FROM TastyBytes.OrderDetail od
-        WHERE od.OrderID = oh.OrderID
-    ) DetailSummary
     WHERE oh.TruckID = @TruckID
       AND CAST(oh.OrderDate AS DATE) BETWEEN @StartDate AND @EndDate
-      AND oh.OrderStatus = 'Completed'
-);
+      AND oh.OrderStatus = 'Completed';
+
+    RETURN @Revenue;
+END;
 GO
 
 -- --------------------------------------------------------------------------
@@ -468,55 +458,59 @@ END;
 GO
 
 -- --------------------------------------------------------------------------
--- 4. fn_ParseTruckConfigJSON — parses JSON truck configuration
+-- 4. fn_ParseTruckConfigJSON — scalar UDF
+--    Converted from multi-statement TVF to scalar. Returns the count of
+--    operational equipment items declared in the truck's JSON config.
+--    Returns 0 when TruckConfig is NULL or the truck does not exist.
 -- --------------------------------------------------------------------------
 CREATE FUNCTION TastyBytes.fn_ParseTruckConfigJSON
 (
     @TruckID INT
 )
-RETURNS @ConfigDetails TABLE
-(
-    TruckID         INT,
-    EquipmentName   NVARCHAR(200),
-    EquipmentType   NVARCHAR(100),
-    InstallDate     DATE,
-    IsOperational   BIT
-)
+RETURNS INT
 AS
 BEGIN
-    INSERT INTO @ConfigDetails (TruckID, EquipmentName, EquipmentType, InstallDate, IsOperational)
-    SELECT
-        @TruckID,
-        JSON_VALUE(e.value, '$.Name'),
-        JSON_VALUE(e.value, '$.Type'),
-        CAST(JSON_VALUE(e.value, '$.InstallDate') AS DATE),
-        CAST(JSON_VALUE(e.value, '$.IsOperational') AS BIT)
+    DECLARE @EquipmentCount INT;
+
+    SELECT @EquipmentCount = COUNT(*)
     FROM TastyBytes.FoodTruck ft
     CROSS APPLY OPENJSON(ft.TruckConfig, '$.Equipment') e
     WHERE ft.TruckID = @TruckID
-      AND ft.TruckConfig IS NOT NULL;
+      AND ft.TruckConfig IS NOT NULL
+      AND CAST(JSON_VALUE(e.value, '$.IsOperational') AS BIT) = 1;
 
-    RETURN;
+    RETURN ISNULL(@EquipmentCount, 0);
 END;
 GO
 
 -- --------------------------------------------------------------------------
--- 5. fn_SplitString — inline table-valued function using STRING_SPLIT
+-- 5. fn_SplitString — scalar UDF
+--    Converted from inline TVF to scalar. Returns the trimmed element at
+--    the supplied 1-based @Position from @InputString split by @Delimiter,
+--    or NULL when the position is out of range.
 -- --------------------------------------------------------------------------
 CREATE FUNCTION TastyBytes.fn_SplitString
 (
     @InputString NVARCHAR(MAX),
-    @Delimiter   NCHAR(1)
+    @Delimiter   NCHAR(1),
+    @Position    INT
 )
-RETURNS TABLE
+RETURNS NVARCHAR(MAX)
 AS
-RETURN
-(
-    SELECT
-        ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS Position,
-        LTRIM(RTRIM(value)) AS Value
-    FROM STRING_SPLIT(@InputString, @Delimiter)
-);
+BEGIN
+    DECLARE @Result NVARCHAR(MAX);
+
+    SELECT @Result = LTRIM(RTRIM(value))
+    FROM (
+        SELECT
+            value,
+            ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RowPos
+        FROM STRING_SPLIT(@InputString, @Delimiter)
+    ) AS Split
+    WHERE Split.RowPos = @Position;
+
+    RETURN @Result;
+END;
 GO
 
 -- ============================================================================
@@ -557,7 +551,7 @@ BEGIN
     BEGIN
         UPDATE TastyBytes.OrderHeader
         SET OrderStatus = 'Completed',
-            CompletedAt = SYSDATETIMEOFFSET(),
+            CompletedAt = GETDATE(),
             ModifiedAt = GETDATE()
         WHERE OrderID = @OrderID;
 
