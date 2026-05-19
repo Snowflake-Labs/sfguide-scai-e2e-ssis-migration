@@ -1,0 +1,23 @@
+USE ROLE accountadmin;
+
+CREATE OR REPLACE DATABASE tastybytesdb;
+USE DATABASE tastybytesdb;
+
+CREATE OR REPLACE SCHEMA tastybytes;
+CREATE OR REPLACE SCHEMA etl_results;
+
+-- Create warehouse
+CREATE WAREHOUSE IF NOT EXISTS XSMALL_WH
+WITH
+WAREHOUSE_SIZE = 'XSMALL'
+AUTO_SUSPEND   = 60
+AUTO_RESUME    = TRUE;
+
+-- Create compute pool for data migration
+CREATE COMPUTE POOL IF NOT EXISTS TASTYBYTES_MIG_POOL
+  MIN_NODES = 1
+  MAX_NODES = 2
+  INSTANCE_FAMILY = CPU_X64_S
+  AUTO_RESUME = TRUE
+  AUTO_SUSPEND_SECS = 600
+  COMMENT = 'Compute pool for TastyBytes SQL Server -> Snowflake data migration';
