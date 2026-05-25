@@ -47,7 +47,7 @@ GO
 --   VALUES ('endexecution',    CURRENT_TIMESTAMP);
 -- --------------------------------------------------------------------------
 CREATE TABLE etl_results.etl_logs (
-    LogID           INT IDENTITY(1,1) PRIMARY KEY,
+    LogID           INT IDENTITY(1,1),
     name            NVARCHAR(200) NOT NULL,
     execution_date  DATETIME NOT NULL
 );
@@ -70,7 +70,7 @@ GO
 --    EWI triggers: TS0077 (collation), FDM-TS0014 (computed column)
 -- --------------------------------------------------------------------------
 CREATE TABLE TastyBytes.Country (
-    CountryID       INT IDENTITY(1,1) PRIMARY KEY,
+    CountryID       INT IDENTITY(1,1),
     CountryName     NVARCHAR(100) COLLATE Albanian_BIN NOT NULL,
     CountryCode     CHAR(3) NOT NULL,
     CurrencyCode    CHAR(3) NOT NULL,
@@ -86,16 +86,14 @@ GO
 -- 2. City
 -- --------------------------------------------------------------------------
 CREATE TABLE TastyBytes.City (
-    CityID          INT IDENTITY(1,1) PRIMARY KEY,
+    CityID          INT IDENTITY(1,1),
     CityName        NVARCHAR(150) NOT NULL,
     CountryID       INT NOT NULL,
     StateProvince   NVARCHAR(100) NULL,
     Latitude        DECIMAL(9,6) NULL,
     Longitude       DECIMAL(9,6) NULL,
     PopulationSize  INT NULL,
-    CreatedAt       DATETIME NOT NULL DEFAULT GETDATE(),
-    CONSTRAINT FK_City_Country FOREIGN KEY (CountryID) REFERENCES TastyBytes.Country(CountryID),
-    CONSTRAINT UQ_City_Name_Country UNIQUE (CityName, CountryID)
+    CreatedAt       DATETIME NOT NULL DEFAULT GETDATE()
 );
 GO
 
@@ -104,7 +102,7 @@ GO
 --    EWI triggers: ROWGUIDCOL
 -- --------------------------------------------------------------------------
 CREATE TABLE TastyBytes.FoodTruck (
-    TruckID         INT IDENTITY(1,1) PRIMARY KEY,
+    TruckID         INT IDENTITY(1,1),
     TruckGUID       UNIQUEIDENTIFIER ROWGUIDCOL NOT NULL DEFAULT NEWID(),
     TruckName       NVARCHAR(200) NOT NULL,
     LicensePlate    VARCHAR(20) NOT NULL,
@@ -114,8 +112,7 @@ CREATE TABLE TastyBytes.FoodTruck (
     MaxCapacity     INT NOT NULL DEFAULT 500,
     IsOperational   BIT NOT NULL DEFAULT 1,
     CreatedAt       DATETIME NOT NULL DEFAULT GETDATE(),
-    ModifiedAt      DATETIME NULL,
-    CONSTRAINT FK_FoodTruck_City FOREIGN KEY (CityID) REFERENCES TastyBytes.City(CityID)
+    ModifiedAt      DATETIME NULL
 );
 GO
 
@@ -124,7 +121,7 @@ GO
 --    EWI triggers: MONEY type, NTEXT (deprecated)
 -- --------------------------------------------------------------------------
 CREATE TABLE TastyBytes.Menu (
-    MenuID          INT IDENTITY(1,1) PRIMARY KEY,
+    MenuID          INT IDENTITY(1,1),
     MenuName        NVARCHAR(200) NOT NULL,
     TruckID         INT NOT NULL,
     CuisineType     NVARCHAR(100) NOT NULL,
@@ -133,8 +130,7 @@ CREATE TABLE TastyBytes.Menu (
     IsSeasonalMenu  BIT NOT NULL DEFAULT 0,
     EffectiveFrom   DATE NOT NULL DEFAULT GETDATE(),
     EffectiveTo     DATE NULL,
-    CreatedAt       DATETIME NOT NULL DEFAULT GETDATE(),
-    CONSTRAINT FK_Menu_FoodTruck FOREIGN KEY (TruckID) REFERENCES TastyBytes.FoodTruck(TruckID)
+    CreatedAt       DATETIME NOT NULL DEFAULT GETDATE()
 );
 GO
 
@@ -143,7 +139,7 @@ GO
 --    EWI triggers: FDM-TS0014 (computed column), ROWVERSION
 -- --------------------------------------------------------------------------
 CREATE TABLE TastyBytes.MenuItem (
-    MenuItemID      INT IDENTITY(1,1) PRIMARY KEY,
+    MenuItemID      INT IDENTITY(1,1),
     MenuID          INT NOT NULL,
     ItemName        NVARCHAR(200) NOT NULL,
     ItemDescription NVARCHAR(MAX) NULL,
@@ -154,8 +150,7 @@ CREATE TABLE TastyBytes.MenuItem (
     IsSpicy         BIT NOT NULL DEFAULT 0,
     PriceWithTax    AS (CAST(BasePrice * 1.08 AS DECIMAL(10,2))),
     RowVer          ROWVERSION,
-    CreatedAt       DATETIME NOT NULL DEFAULT GETDATE(),
-    CONSTRAINT FK_MenuItem_Menu FOREIGN KEY (MenuID) REFERENCES TastyBytes.Menu(MenuID)
+    CreatedAt       DATETIME NOT NULL DEFAULT GETDATE()
 );
 GO
 
@@ -164,7 +159,7 @@ GO
 --    EWI triggers: UNIQUEIDENTIFIER + NEWID()
 -- --------------------------------------------------------------------------
 CREATE TABLE TastyBytes.Customer (
-    CustomerID      INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerID      INT IDENTITY(1,1),
     CustomerGUID    UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
     FirstName       NVARCHAR(100) NOT NULL,
     LastName        NVARCHAR(100) NOT NULL,
@@ -175,8 +170,7 @@ CREATE TABLE TastyBytes.Customer (
     MemberSince     DATE NOT NULL DEFAULT GETDATE(),
     IsActive        BIT NOT NULL DEFAULT 1,
     CreatedAt       DATETIME NOT NULL DEFAULT GETDATE(),
-    ModifiedAt      DATETIME NULL,
-    CONSTRAINT FK_Customer_City FOREIGN KEY (PreferredCityID) REFERENCES TastyBytes.City(CityID)
+    ModifiedAt      DATETIME NULL
 );
 GO
 
@@ -187,7 +181,7 @@ GO
 --    Timezone information is dropped intentionally.
 -- --------------------------------------------------------------------------
 CREATE TABLE TastyBytes.OrderHeader (
-    OrderID         INT IDENTITY(1,1) PRIMARY KEY,
+    OrderID         INT IDENTITY(1,1),
     CustomerID      INT NOT NULL,
     TruckID         INT NOT NULL,
     OrderDate       DATETIME NOT NULL DEFAULT GETDATE(),
@@ -198,10 +192,7 @@ CREATE TABLE TastyBytes.OrderHeader (
     PaymentMethod   VARCHAR(30) NULL,
     OrderNotes      NVARCHAR(500) NULL,
     CreatedAt       DATETIME NOT NULL DEFAULT GETDATE(),
-    ModifiedAt      DATETIME NULL,
-    CONSTRAINT FK_OrderHeader_Customer FOREIGN KEY (CustomerID) REFERENCES TastyBytes.Customer(CustomerID),
-    CONSTRAINT FK_OrderHeader_FoodTruck FOREIGN KEY (TruckID) REFERENCES TastyBytes.FoodTruck(TruckID),
-    CONSTRAINT CK_OrderHeader_Status CHECK (OrderStatus IN ('Pending','InProgress','Completed','Cancelled','Refunded'))
+    ModifiedAt      DATETIME NULL
 );
 GO
 
@@ -217,10 +208,7 @@ CREATE TABLE TastyBytes.OrderDetail (
     UnitPrice       SMALLMONEY NOT NULL,
     Discount        SMALLMONEY NOT NULL DEFAULT 0.00,
     LineTotal       AS (CAST((Quantity * UnitPrice) - Discount AS DECIMAL(10,2))),
-    SpecialRequests NVARCHAR(300) NULL,
-    CONSTRAINT PK_OrderDetail PRIMARY KEY (OrderID, LineNumber),
-    CONSTRAINT FK_OrderDetail_OrderHeader FOREIGN KEY (OrderID) REFERENCES TastyBytes.OrderHeader(OrderID),
-    CONSTRAINT FK_OrderDetail_MenuItem FOREIGN KEY (MenuItemID) REFERENCES TastyBytes.MenuItem(MenuItemID)
+    SpecialRequests NVARCHAR(300) NULL
 );
 GO
 
@@ -229,7 +217,7 @@ GO
 --    EWI triggers: SPARSE column
 -- --------------------------------------------------------------------------
 CREATE TABLE TastyBytes.Inventory (
-    InventoryID     INT IDENTITY(1,1) PRIMARY KEY,
+    InventoryID     INT IDENTITY(1,1),
     TruckID         INT NOT NULL,
     IngredientName  NVARCHAR(200) NOT NULL,
     QuantityOnHand  DECIMAL(10,2) NOT NULL DEFAULT 0.00,
@@ -237,8 +225,7 @@ CREATE TABLE TastyBytes.Inventory (
     ReorderLevel    DECIMAL(10,2) NOT NULL DEFAULT 10.00,
     ExpirationDate  DATE NULL,
     SupplierNotes   NVARCHAR(500) SPARSE NULL,
-    LastRestocked   DATETIME NULL,
-    CONSTRAINT FK_Inventory_FoodTruck FOREIGN KEY (TruckID) REFERENCES TastyBytes.FoodTruck(TruckID)
+    LastRestocked   DATETIME NULL
 );
 GO
 
@@ -250,7 +237,7 @@ GO
 --    valid on DATETIME values.
 -- --------------------------------------------------------------------------
 CREATE TABLE TastyBytes.EmployeeShift (
-    ShiftID         INT IDENTITY(1,1) PRIMARY KEY,
+    ShiftID         INT IDENTITY(1,1),
     EmployeeName    NVARCHAR(200) NOT NULL,
     TruckID         INT NOT NULL,
     ShiftDate       DATE NOT NULL,
@@ -259,9 +246,7 @@ CREATE TABLE TastyBytes.EmployeeShift (
     HoursWorked     AS (DATEDIFF(MINUTE, StartTime, EndTime) / 60.0),
     Role            VARCHAR(50) NOT NULL DEFAULT 'Cook',
     HourlyRate      SMALLMONEY NOT NULL,
-    CreatedAt       DATETIME NOT NULL DEFAULT GETDATE(),
-    CONSTRAINT FK_EmployeeShift_FoodTruck FOREIGN KEY (TruckID) REFERENCES TastyBytes.FoodTruck(TruckID),
-    CONSTRAINT CK_EmployeeShift_Role CHECK (Role IN ('Cook','Driver','Cashier','Manager'))
+    CreatedAt       DATETIME NOT NULL DEFAULT GETDATE()
 );
 GO
 
