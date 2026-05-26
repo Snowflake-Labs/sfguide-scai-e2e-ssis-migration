@@ -381,35 +381,7 @@ GO
 -- ============================================================================
 
 -- --------------------------------------------------------------------------
--- 2. fn_GetTruckRevenue — scalar UDF
---    Converted from inline TVF to a scalar function. Returns the total
---    revenue (sum of TotalAmount) for a given truck within a date range,
---    counting only completed orders. Callers that previously consumed the
---    TVF row set should now SUM externally or use this aggregate directly.
--- --------------------------------------------------------------------------
-CREATE FUNCTION TastyBytes.fn_GetTruckRevenue
-(
-    @TruckID    INT,
-    @StartDate  DATE,
-    @EndDate    DATE
-)
-RETURNS MONEY
-AS
-BEGIN
-    DECLARE @Revenue MONEY;
-
-    SELECT @Revenue = ISNULL(SUM(oh.TotalAmount), 0)
-    FROM TastyBytes.OrderHeader oh
-    WHERE oh.TruckID = @TruckID
-      AND CAST(oh.OrderDate AS DATE) BETWEEN @StartDate AND @EndDate
-      AND oh.OrderStatus = 'Completed';
-
-    RETURN @Revenue;
-END;
-GO
-
--- --------------------------------------------------------------------------
--- 3. fn_FormatPhoneNumber — STUFF, PATINDEX
+-- 1. fn_FormatPhoneNumber — STUFF, PATINDEX
 -- --------------------------------------------------------------------------
 CREATE FUNCTION TastyBytes.fn_FormatPhoneNumber
 (
@@ -443,7 +415,7 @@ END;
 GO
 
 -- --------------------------------------------------------------------------
--- 4. fn_ParseTruckConfigJSON — scalar UDF
+-- 2. fn_ParseTruckConfigJSON — scalar UDF
 --    Converted from multi-statement TVF to scalar. Returns the count of
 --    operational equipment items declared in the truck's JSON config.
 --    Returns 0 when TruckConfig is NULL or the truck does not exist.
@@ -468,309 +440,41 @@ BEGIN
 END;
 GO
 
--- --------------------------------------------------------------------------
--- 5. fn_SplitString — scalar UDF
---    Converted from inline TVF to scalar. Returns the trimmed element at
---    the supplied 1-based @Position from @InputString split by @Delimiter,
---    or NULL when the position is out of range.
--- --------------------------------------------------------------------------
-CREATE FUNCTION TastyBytes.fn_SplitString
-(
-    @InputString NVARCHAR(MAX),
-    @Delimiter   NCHAR(1),
-    @Position    INT
-)
-RETURNS NVARCHAR(MAX)
-AS
-BEGIN
-    DECLARE @Result NVARCHAR(MAX);
-
-    SELECT @Result = LTRIM(RTRIM(value))
-    FROM (
-        SELECT
-            value,
-            ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RowPos
-        FROM STRING_SPLIT(@InputString, @Delimiter)
-    ) AS Split
-    WHERE Split.RowPos = @Position;
-
-    RETURN @Result;
-END;
-GO
-
 -- ============================================================================
 -- STORED PROCEDURES
 -- ============================================================================
 
 -- --------------------------------------------------------------------------
--- 1. sp_ProcessDailyOrders
---    EWI triggers: TS0036 (GLOBAL cursor), TS0035 (uninitialized cursor variable)
--- --------------------------------------------------------------------------
-CREATE PROCEDURE TastyBytes.sp_ProcessDailyOrders
-    @ProcessDate DATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    DECLARE @OrderID        INT;
-    DECLARE @TotalAmount    MONEY;
-    DECLARE @CustomerID     INT;
-    DECLARE @TruckID        INT;
-    DECLARE @ProcessedCount INT = 0;
-
-    -- EWI: TS0035 — Cursor variable declared but never initialized
-    DECLARE @AuditCursor CURSOR;
-
-    -- EWI: TS0036 — GLOBAL cursor not supported in Snowflake Scripting
-    DECLARE OrderCursor CURSOR GLOBAL FOR
-        SELECT OrderID, TotalAmount, CustomerID, TruckID
-        FROM TastyBytes.OrderHeader
-        WHERE CAST(OrderDate AS DATE) = @ProcessDate
-          AND OrderStatus = 'Pending'
-        ORDER BY OrderDate;
-
-    OPEN OrderCursor;
-    FETCH NEXT FROM OrderCursor INTO @OrderID, @TotalAmount, @CustomerID, @TruckID;
-
-    WHILE @@FETCH_STATUS = 0
-    BEGIN
-        UPDATE TastyBytes.OrderHeader
-        SET OrderStatus = 'Completed',
-            CompletedAt = GETDATE(),
-            ModifiedAt = GETDATE()
-        WHERE OrderID = @OrderID;
-
-        UPDATE TastyBytes.Customer
-        SET LoyaltyPoints = LoyaltyPoints + CAST(@TotalAmount AS INT),
-            ModifiedAt = GETDATE()
-        WHERE CustomerID = @CustomerID;
-
-        SET @ProcessedCount = @ProcessedCount + 1;
-
-        FETCH NEXT FROM OrderCursor INTO @OrderID, @TotalAmount, @CustomerID, @TruckID;
-    END
-
-    CLOSE OrderCursor;
-    DEALLOCATE OrderCursor;
-
-    SELECT @ProcessedCount AS TotalProcessed;
-END;
-GO
-
--- --------------------------------------------------------------------------
--- 2. sp_UpdateInventory
+-- 1. sp_UpdateInventory
+--    Restocks inventory items at/below ReorderLevel for a given truck.
+--    Returns ItemsRestocked = count of rows updated.
+--    Optional @AsOf parameter makes LastRestocked deterministic for testing.
 -- --------------------------------------------------------------------------
 CREATE PROCEDURE TastyBytes.sp_UpdateInventory
-    @TruckID INT
+    @TruckID  INT      = NULL,
+    @AsOf     DATETIME = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @RestockCount INT;
+    DECLARE @RestockCount INT = 0;
+
+    -- Short-circuit on NULL so the predicate never relies on UNKNOWN semantics
+    IF @TruckID IS NULL
+    BEGIN
+        SELECT 0 AS ItemsRestocked;
+        RETURN;
+    END
 
     UPDATE TastyBytes.Inventory
     SET QuantityOnHand = ReorderLevel * 2,
-        LastRestocked = GETDATE()
-    WHERE TruckID = @TruckID
+        LastRestocked  = COALESCE(@AsOf, GETDATE())
+    WHERE TruckID       = @TruckID
       AND QuantityOnHand <= ReorderLevel;
 
     SET @RestockCount = @@ROWCOUNT;
 
     SELECT @RestockCount AS ItemsRestocked;
-END;
-GO
-
--- --------------------------------------------------------------------------
--- 3. sp_GenerateSalesReport
--- --------------------------------------------------------------------------
-CREATE PROCEDURE TastyBytes.sp_GenerateSalesReport
-    @StartDate DATE,
-    @EndDate   DATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    SELECT
-        ft.TruckID,
-        ft.TruckName,
-        COUNT(oh.OrderID)          AS OrderCount,
-        SUM(oh.TotalAmount)        AS TotalRevenue
-    FROM TastyBytes.FoodTruck ft
-    INNER JOIN TastyBytes.OrderHeader oh ON ft.TruckID = oh.TruckID
-    WHERE ft.IsOperational = 1
-      AND oh.OrderStatus = 'Completed'
-      AND CAST(oh.OrderDate AS DATE) BETWEEN @StartDate AND @EndDate
-    GROUP BY ft.TruckID, ft.TruckName
-    HAVING COUNT(oh.OrderID) > 0
-    ORDER BY SUM(oh.TotalAmount) DESC;
-END;
-GO
-
--- --------------------------------------------------------------------------
--- 4. sp_MergeCustomerData
---    EWI triggers: TS0036 (GLOBAL cursor), TS0035 (uninitialized cursor variable)
--- --------------------------------------------------------------------------
-CREATE PROCEDURE TastyBytes.sp_MergeCustomerData
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    IF OBJECT_ID('TastyBytes.CustomerStaging') IS NULL
-    BEGIN
-        CREATE TABLE TastyBytes.CustomerStaging (
-            Email           VARCHAR(255) NOT NULL,
-            FirstName       NVARCHAR(100),
-            LastName        NVARCHAR(100),
-            PhoneNumber     VARCHAR(20),
-            PreferredCityID INT
-        );
-    END
-
-    DECLARE @Email       VARCHAR(255);
-    DECLARE @FirstName   NVARCHAR(100);
-    DECLARE @LastName    NVARCHAR(100);
-    DECLARE @Phone       VARCHAR(20);
-    DECLARE @CityID      INT;
-    DECLARE @InsertCount INT = 0;
-    DECLARE @UpdateCount INT = 0;
-
-    -- EWI: TS0035 — Cursor variable declared but never initialized
-    DECLARE @LogCursor CURSOR;
-
-    -- EWI: TS0036 — GLOBAL cursor not supported in Snowflake Scripting
-    DECLARE StagingCursor CURSOR GLOBAL FOR
-        SELECT Email, FirstName, LastName, PhoneNumber, PreferredCityID
-        FROM TastyBytes.CustomerStaging;
-
-    OPEN StagingCursor;
-    FETCH NEXT FROM StagingCursor INTO @Email, @FirstName, @LastName, @Phone, @CityID;
-
-    WHILE @@FETCH_STATUS = 0
-    BEGIN
-        IF EXISTS (SELECT 1 FROM TastyBytes.Customer WHERE Email = @Email)
-        BEGIN
-            UPDATE TastyBytes.Customer
-            SET FirstName = @FirstName,
-                LastName = @LastName,
-                PhoneNumber = @Phone,
-                PreferredCityID = @CityID,
-                ModifiedAt = GETDATE()
-            WHERE Email = @Email;
-
-            SET @UpdateCount = @UpdateCount + 1;
-        END
-        ELSE
-        BEGIN
-            INSERT INTO TastyBytes.Customer (FirstName, LastName, Email, PhoneNumber, PreferredCityID, CreatedAt)
-            VALUES (@FirstName, @LastName, @Email, @Phone, @CityID, GETDATE());
-
-            SET @InsertCount = @InsertCount + 1;
-        END
-
-        FETCH NEXT FROM StagingCursor INTO @Email, @FirstName, @LastName, @Phone, @CityID;
-    END
-
-    CLOSE StagingCursor;
-    DEALLOCATE StagingCursor;
-
-    SELECT @InsertCount AS Inserted, @UpdateCount AS Updated;
-END;
-GO
-
--- --------------------------------------------------------------------------
--- 5. sp_ArchiveOldOrders
--- --------------------------------------------------------------------------
-CREATE PROCEDURE TastyBytes.sp_ArchiveOldOrders
-    @CutoffDate DATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    IF OBJECT_ID('TastyBytes.OrderHeader_Archive') IS NULL
-    BEGIN
-        SELECT TOP 0 * INTO TastyBytes.OrderHeader_Archive
-        FROM TastyBytes.OrderHeader;
-    END
-
-    INSERT INTO TastyBytes.OrderHeader_Archive
-    SELECT * FROM TastyBytes.OrderHeader
-    WHERE OrderStatus = 'Completed'
-      AND CAST(OrderDate AS DATE) < @CutoffDate;
-
-    DECLARE @ArchiveCount INT = @@ROWCOUNT;
-
-    DELETE FROM TastyBytes.OrderHeader
-    WHERE OrderStatus = 'Completed'
-      AND CAST(OrderDate AS DATE) < @CutoffDate
-      AND OrderID IN (SELECT OrderID FROM TastyBytes.OrderHeader_Archive);
-
-    SELECT @ArchiveCount AS TotalArchived;
-END;
-GO
-
--- --------------------------------------------------------------------------
--- 6. sp_SendNotification
--- --------------------------------------------------------------------------
-CREATE PROCEDURE TastyBytes.sp_SendNotification
-    @TruckID INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    SELECT
-        @TruckID            AS TruckID,
-        i.IngredientName,
-        i.QuantityOnHand,
-        i.ReorderLevel,
-        GETDATE()           AS AlertDate
-    FROM TastyBytes.Inventory i
-    WHERE i.TruckID = @TruckID
-      AND i.QuantityOnHand <= i.ReorderLevel;
-END;
-GO
-
--- --------------------------------------------------------------------------
--- 7. sp_ReconcileShifts
--- --------------------------------------------------------------------------
-CREATE PROCEDURE TastyBytes.sp_ReconcileShifts
-    @ReconcileDate DATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    SELECT
-        ft.TruckID,
-        ft.TruckName,
-        (SELECT COUNT(*) FROM TastyBytes.EmployeeShift es
-         WHERE es.TruckID = ft.TruckID AND es.ShiftDate = @ReconcileDate) AS ShiftsLogged,
-        (SELECT COUNT(*) FROM TastyBytes.OrderHeader oh2
-         WHERE oh2.TruckID = ft.TruckID
-           AND CAST(oh2.OrderDate AS DATE) = @ReconcileDate
-           AND oh2.OrderStatus IN ('Completed', 'InProgress')) AS OrdersFulfilled,
-        ISNULL(SUM(oh.TotalAmount), 0) AS Revenue,
-        CASE
-            WHEN (SELECT COUNT(*) FROM TastyBytes.EmployeeShift es
-                  WHERE es.TruckID = ft.TruckID AND es.ShiftDate = @ReconcileDate) = 0
-             AND (SELECT COUNT(*) FROM TastyBytes.OrderHeader oh2
-                  WHERE oh2.TruckID = ft.TruckID
-                    AND CAST(oh2.OrderDate AS DATE) = @ReconcileDate
-                    AND oh2.OrderStatus IN ('Completed', 'InProgress')) > 0 THEN 1
-            WHEN (SELECT COUNT(*) FROM TastyBytes.EmployeeShift es
-                  WHERE es.TruckID = ft.TruckID AND es.ShiftDate = @ReconcileDate) > 0
-             AND (SELECT COUNT(*) FROM TastyBytes.OrderHeader oh2
-                  WHERE oh2.TruckID = ft.TruckID
-                    AND CAST(oh2.OrderDate AS DATE) = @ReconcileDate
-                    AND oh2.OrderStatus IN ('Completed', 'InProgress')) = 0 THEN 1
-            ELSE 0
-        END AS HasDiscrepancy
-    FROM TastyBytes.FoodTruck ft
-    LEFT JOIN TastyBytes.OrderHeader oh
-        ON ft.TruckID = oh.TruckID
-       AND CAST(oh.OrderDate AS DATE) = @ReconcileDate
-       AND oh.OrderStatus = 'Completed'
-    WHERE ft.IsOperational = 1
-    GROUP BY ft.TruckID, ft.TruckName
-    ORDER BY ft.TruckName;
 END;
 GO
 
