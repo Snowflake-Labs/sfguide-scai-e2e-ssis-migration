@@ -10,6 +10,18 @@
  * Deliberately uses T-SQL constructs that generate SnowConvert EWIs.
  ******************************************************************************/
 
+-- Required session settings. JDBC clients (DataGrip, etc.) often connect with
+-- ANSI_WARNINGS OFF, which causes error 1934 on SCHEMA_ID, computed columns,
+-- and OPENJSON unless corrected before any other statement runs.
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_WARNINGS ON;
+SET ANSI_PADDING ON;
+SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET NUMERIC_ROUNDABORT OFF;
+GO
+
 -- ============================================================================
 -- DATABASE & SCHEMA SETUP
 -- ============================================================================
@@ -29,12 +41,10 @@ GO
 USE TastyBytesDB;
 GO
 
-IF SCHEMA_ID('TastyBytes') IS NULL
-    EXEC('CREATE SCHEMA TastyBytes');
+CREATE SCHEMA TastyBytes;
 GO
 
-IF SCHEMA_ID('etl_results') IS NULL
-    EXEC('CREATE SCHEMA etl_results');
+CREATE SCHEMA etl_results;
 GO
 
 -- --------------------------------------------------------------------------
@@ -51,14 +61,6 @@ CREATE TABLE etl_results.etl_logs (
     name            NVARCHAR(200) NOT NULL,
     execution_date  DATETIME NOT NULL
 );
-GO
-
--- EWI: TS0002 — ANSI_PADDING OFF not supported in Snowflake
-SET ANSI_PADDING OFF;
-GO
-
--- EWI: TS0003 — ANSI_WARNINGS OFF not supported in Snowflake
-SET ANSI_WARNINGS OFF;
 GO
 
 -- ============================================================================
@@ -93,12 +95,7 @@ CREATE TABLE TastyBytes.City (
     Latitude        DECIMAL(9,6) NULL,
     Longitude       DECIMAL(9,6) NULL,
     PopulationSize  INT NULL,
-<<<<<<< Updated upstream
     CreatedAt       DATETIME NOT NULL DEFAULT GETDATE()
-=======
-    CreatedAt       DATETIME NOT NULL DEFAULT GETDATE(),
-    CONSTRAINT UQ_City_Name_Country UNIQUE (CityName, CountryID)
->>>>>>> Stashed changes
 );
 GO
 
@@ -197,12 +194,7 @@ CREATE TABLE TastyBytes.OrderHeader (
     PaymentMethod   VARCHAR(30) NULL,
     OrderNotes      NVARCHAR(500) NULL,
     CreatedAt       DATETIME NOT NULL DEFAULT GETDATE(),
-<<<<<<< Updated upstream
     ModifiedAt      DATETIME NULL
-=======
-    ModifiedAt      DATETIME NULL,
-    CONSTRAINT CK_OrderHeader_Status CHECK (OrderStatus IN ('Pending','InProgress','Completed','Cancelled','Refunded'))
->>>>>>> Stashed changes
 );
 GO
 
@@ -218,12 +210,7 @@ CREATE TABLE TastyBytes.OrderDetail (
     UnitPrice       SMALLMONEY NOT NULL,
     Discount        SMALLMONEY NOT NULL DEFAULT 0.00,
     LineTotal       AS (CAST((Quantity * UnitPrice) - Discount AS DECIMAL(10,2))),
-<<<<<<< Updated upstream
     SpecialRequests NVARCHAR(300) NULL
-=======
-    SpecialRequests NVARCHAR(300) NULL,
-    CONSTRAINT PK_OrderDetail PRIMARY KEY (OrderID, LineNumber)
->>>>>>> Stashed changes
 );
 GO
 
@@ -261,12 +248,7 @@ CREATE TABLE TastyBytes.EmployeeShift (
     HoursWorked     AS (DATEDIFF(MINUTE, StartTime, EndTime) / 60.0),
     Role            VARCHAR(50) NOT NULL DEFAULT 'Cook',
     HourlyRate      SMALLMONEY NOT NULL,
-<<<<<<< Updated upstream
     CreatedAt       DATETIME NOT NULL DEFAULT GETDATE()
-=======
-    CreatedAt       DATETIME NOT NULL DEFAULT GETDATE(),
-    CONSTRAINT CK_EmployeeShift_Role CHECK (Role IN ('Cook','Driver','Cashier','Manager'))
->>>>>>> Stashed changes
 );
 GO
 
@@ -424,6 +406,19 @@ BEGIN
 
     SELECT @RestockCount AS ItemsRestocked;
 END;
+GO
+
+-- EWI: TS0002 — ANSI_PADDING OFF not supported in Snowflake
+SET ANSI_PADDING OFF;
+GO
+
+-- EWI: TS0003 — ANSI_WARNINGS OFF not supported in Snowflake
+SET ANSI_WARNINGS OFF;
+GO
+
+-- Restore session settings so the script can be re-run in the same connection
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
 GO
 
 PRINT '=== Tasty Bytes workload deployment complete ===';
