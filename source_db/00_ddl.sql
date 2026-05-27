@@ -93,7 +93,12 @@ CREATE TABLE TastyBytes.City (
     Latitude        DECIMAL(9,6) NULL,
     Longitude       DECIMAL(9,6) NULL,
     PopulationSize  INT NULL,
+<<<<<<< Updated upstream
     CreatedAt       DATETIME NOT NULL DEFAULT GETDATE()
+=======
+    CreatedAt       DATETIME NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT UQ_City_Name_Country UNIQUE (CityName, CountryID)
+>>>>>>> Stashed changes
 );
 GO
 
@@ -192,7 +197,12 @@ CREATE TABLE TastyBytes.OrderHeader (
     PaymentMethod   VARCHAR(30) NULL,
     OrderNotes      NVARCHAR(500) NULL,
     CreatedAt       DATETIME NOT NULL DEFAULT GETDATE(),
+<<<<<<< Updated upstream
     ModifiedAt      DATETIME NULL
+=======
+    ModifiedAt      DATETIME NULL,
+    CONSTRAINT CK_OrderHeader_Status CHECK (OrderStatus IN ('Pending','InProgress','Completed','Cancelled','Refunded'))
+>>>>>>> Stashed changes
 );
 GO
 
@@ -208,7 +218,12 @@ CREATE TABLE TastyBytes.OrderDetail (
     UnitPrice       SMALLMONEY NOT NULL,
     Discount        SMALLMONEY NOT NULL DEFAULT 0.00,
     LineTotal       AS (CAST((Quantity * UnitPrice) - Discount AS DECIMAL(10,2))),
+<<<<<<< Updated upstream
     SpecialRequests NVARCHAR(300) NULL
+=======
+    SpecialRequests NVARCHAR(300) NULL,
+    CONSTRAINT PK_OrderDetail PRIMARY KEY (OrderID, LineNumber)
+>>>>>>> Stashed changes
 );
 GO
 
@@ -246,7 +261,12 @@ CREATE TABLE TastyBytes.EmployeeShift (
     HoursWorked     AS (DATEDIFF(MINUTE, StartTime, EndTime) / 60.0),
     Role            VARCHAR(50) NOT NULL DEFAULT 'Cook',
     HourlyRate      SMALLMONEY NOT NULL,
+<<<<<<< Updated upstream
     CreatedAt       DATETIME NOT NULL DEFAULT GETDATE()
+=======
+    CreatedAt       DATETIME NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT CK_EmployeeShift_Role CHECK (Role IN ('Cook','Driver','Cashier','Manager'))
+>>>>>>> Stashed changes
 );
 GO
 
@@ -255,79 +275,7 @@ GO
 -- ============================================================================
 
 -- --------------------------------------------------------------------------
--- 1. vw_ActiveTrucks
---    EWI triggers: TS0044 (NOLOCK table hints)
--- --------------------------------------------------------------------------
-CREATE VIEW TastyBytes.vw_ActiveTrucks
-AS
-SELECT
-    ft.TruckID,
-    ft.TruckName,
-    ft.LicensePlate,
-    c.CityName,
-    co.CountryName,
-    ft.YearPurchased,
-    ft.MaxCapacity
-FROM TastyBytes.FoodTruck ft WITH (NOLOCK)
-INNER JOIN TastyBytes.City c WITH (NOLOCK) ON ft.CityID = c.CityID
-INNER JOIN TastyBytes.Country co WITH (NOLOCK) ON c.CountryID = co.CountryID
-WHERE ft.IsOperational = 1;
-GO
-
--- --------------------------------------------------------------------------
--- 2. vw_DailySalesSummary
---    EWI triggers: TS0044 (NOLOCK table hint)
--- --------------------------------------------------------------------------
-CREATE VIEW TastyBytes.vw_DailySalesSummary
-AS
-SELECT
-    CAST(oh.OrderDate AS DATE)          AS SaleDate,
-    ft.TruckName,
-    c.CityName,
-    COUNT(*)                             AS TotalOrders,
-    SUM(oh.TotalAmount)                  AS GrossRevenue,
-    SUM(oh.TipAmount)                    AS TotalTips,
-    AVG(oh.TotalAmount)                  AS AvgOrderValue
-FROM TastyBytes.OrderHeader oh WITH (NOLOCK)
-INNER JOIN TastyBytes.FoodTruck ft WITH (NOLOCK) ON oh.TruckID = ft.TruckID
-INNER JOIN TastyBytes.City c ON ft.CityID = c.CityID
-WHERE oh.OrderStatus = 'Completed'
-GROUP BY CAST(oh.OrderDate AS DATE), ft.TruckName, c.CityName;
-GO
-
--- --------------------------------------------------------------------------
--- 3. vw_MenuPricing
---    EWI triggers: TS0010 (CTE in view)
--- --------------------------------------------------------------------------
-CREATE VIEW TastyBytes.vw_MenuPricing
-AS
-WITH MenuStats AS (
-    SELECT
-        m.MenuID,
-        m.MenuName,
-        m.CuisineType,
-        COUNT(mi.MenuItemID)             AS ItemCount,
-        MIN(mi.BasePrice)                AS MinPrice,
-        MAX(mi.BasePrice)                AS MaxPrice,
-        AVG(mi.BasePrice)                AS AvgPrice
-    FROM TastyBytes.Menu m
-    INNER JOIN TastyBytes.MenuItem mi ON m.MenuID = mi.MenuID
-    GROUP BY m.MenuID, m.MenuName, m.CuisineType
-)
-SELECT
-    ms.MenuID,
-    ms.MenuName,
-    ms.CuisineType,
-    ms.ItemCount,
-    ms.MinPrice,
-    ms.MaxPrice,
-    ms.AvgPrice,
-    (ms.MaxPrice - ms.MinPrice) AS PriceRange
-FROM MenuStats ms;
-GO
-
--- --------------------------------------------------------------------------
--- 4. vw_TopSellingItems — CROSS APPLY
+-- 1. vw_TopSellingItems — CROSS APPLY
 -- --------------------------------------------------------------------------
 CREATE VIEW TastyBytes.vw_TopSellingItems
 AS
@@ -356,7 +304,7 @@ CROSS APPLY (
 GO
 
 -- --------------------------------------------------------------------------
--- 5. vw_CustomerOrderHistory
+-- 2. vw_CustomerOrderHistory
 -- --------------------------------------------------------------------------
 CREATE VIEW TastyBytes.vw_CustomerOrderHistory
 AS
