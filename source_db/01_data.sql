@@ -268,24 +268,24 @@ GO
 -- ============================================================================
 SET IDENTITY_INSERT TastyBytes.Inventory ON;
 
-INSERT INTO TastyBytes.Inventory (InventoryID, TruckID, IngredientName, QuantityOnHand, UnitOfMeasure, ReorderLevel, ExpirationDate, SupplierNotes, LastRestocked)
+INSERT INTO TastyBytes.Inventory (InventoryID, TruckID, IngredientName, QuantityOnHand, UnitOfMeasure, ReorderLevel, SupplierNotes, LastRestocked)
 VALUES
-    (1,  1,  N'Pulled Pork',       25.00, 'lbs',    10.00, '2024-10-15', N'Supplier: Smoke Masters LLC',  '2024-09-28'),
-    (2,  1,  N'Brisket',           15.00, 'lbs',    10.00, '2024-10-12', NULL,                            '2024-09-28'),
-    (3,  1,  N'BBQ Sauce',         8.50,  'gallons', 5.00, '2025-01-01', N'House recipe',                 '2024-09-15'),
-    (4,  2,  N'Corn Tortillas',    200.00,'count',   50.00,'2024-10-20', NULL,                            '2024-10-01'),
-    (5,  2,  N'Carne Asada',       18.00, 'lbs',    10.00, '2024-10-10', NULL,                            '2024-09-30'),
-    (6,  2,  N'Cilantro',          3.00,  'bunches', 5.00, '2024-10-08', NULL,                            '2024-10-02'),
-    (7,  3,  N'Ramen Noodles',     120.00,'portions',30.00,'2024-11-01', N'Imported from Japan',          '2024-09-20'),
-    (8,  3,  N'Pork Belly',        12.00, 'lbs',    10.00, '2024-10-14', NULL,                            '2024-10-01'),
-    (9,  4,  N'Beef Patties',      80.00, 'count',   20.00,'2024-10-18', NULL,                            '2024-10-05'),
-    (10, 4,  N'Burger Buns',       90.00, 'count',   25.00,'2024-10-12', NULL,                            '2024-10-05'),
-    (11, 5,  N'Pizza Dough',       30.00, 'balls',  10.00, '2024-10-10', N'Made fresh daily',             '2024-10-06'),
-    (12, 5,  N'Mozzarella',        10.00, 'lbs',     5.00, '2024-10-15', N'Buffalo mozzarella',           '2024-10-03'),
-    (13, 6,  N'Basmati Rice',      50.00, 'lbs',    15.00, '2025-06-01', NULL,                            '2024-09-01'),
-    (14, 6,  N'Chicken Breast',    20.00, 'lbs',    10.00, '2024-10-12', NULL,                            '2024-10-02'),
-    (15, 9,  N'Cheese Curds',      5.00,  'lbs',    10.00, '2024-10-09', N'Quebec supplier',              '2024-10-01'),
-    (16, 9,  N'Gravy Mix',         2.00,  'lbs',    10.00, '2025-03-01', NULL,                            '2024-08-15');
+    (1,  1,  N'Pulled Pork',       25.00, 'lbs',    10.00, N'Supplier: Smoke Masters LLC',  '2024-09-28'),
+    (2,  1,  N'Brisket',           15.00, 'lbs',    10.00, NULL,                            '2024-09-28'),
+    (3,  1,  N'BBQ Sauce',         8.50,  'gallons', 5.00, N'House recipe',                 '2024-09-15'),
+    (4,  2,  N'Corn Tortillas',    200.00,'count',   50.00,NULL,                            '2024-10-01'),
+    (5,  2,  N'Carne Asada',       18.00, 'lbs',    10.00, NULL,                            '2024-09-30'),
+    (6,  2,  N'Cilantro',          3.00,  'bunches', 5.00, NULL,                            '2024-10-02'),
+    (7,  3,  N'Ramen Noodles',     120.00,'portions',30.00,N'Imported from Japan',          '2024-09-20'),
+    (8,  3,  N'Pork Belly',        12.00, 'lbs',    10.00, NULL,                            '2024-10-01'),
+    (9,  4,  N'Beef Patties',      80.00, 'count',   20.00,NULL,                            '2024-10-05'),
+    (10, 4,  N'Burger Buns',       90.00, 'count',   25.00,NULL,                            '2024-10-05'),
+    (11, 5,  N'Pizza Dough',       30.00, 'balls',  10.00, N'Made fresh daily',             '2024-10-06'),
+    (12, 5,  N'Mozzarella',        10.00, 'lbs',     5.00, N'Buffalo mozzarella',           '2024-10-03'),
+    (13, 6,  N'Basmati Rice',      50.00, 'lbs',    15.00, NULL,                            '2024-09-01'),
+    (14, 6,  N'Chicken Breast',    20.00, 'lbs',    10.00, NULL,                            '2024-10-02'),
+    (15, 9,  N'Cheese Curds',      5.00,  'lbs',    10.00, N'Quebec supplier',              '2024-10-01'),
+    (16, 9,  N'Gravy Mix',         2.00,  'lbs',    10.00, NULL,                            '2024-08-15');
 
 SET IDENTITY_INSERT TastyBytes.Inventory OFF;
 GO
