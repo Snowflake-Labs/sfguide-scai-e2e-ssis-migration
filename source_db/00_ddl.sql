@@ -225,7 +225,6 @@ CREATE TABLE TastyBytes.Inventory (
     QuantityOnHand  DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     UnitOfMeasure   VARCHAR(20) NOT NULL,
     ReorderLevel    DECIMAL(10,2) NOT NULL DEFAULT 10.00,
-    ExpirationDate  DATE NULL,
     SupplierNotes   NVARCHAR(500) SPARSE NULL,
     LastRestocked   DATETIME NULL
 );
@@ -311,7 +310,7 @@ GO
 -- ============================================================================
 
 -- --------------------------------------------------------------------------
--- 1. fn_FormatPhoneNumber — STUFF, PATINDEX
+-- 1. fn_FormatPhoneNumber — simpler: TRANSLATE strips non-digits in one pass.
 -- --------------------------------------------------------------------------
 CREATE FUNCTION TastyBytes.fn_FormatPhoneNumber
 (
@@ -320,53 +319,26 @@ CREATE FUNCTION TastyBytes.fn_FormatPhoneNumber
 RETURNS VARCHAR(20)
 AS
 BEGIN
-    DECLARE @CleanPhone VARCHAR(20);
-    DECLARE @Formatted VARCHAR(20);
+    DECLARE @CleanPhone VARCHAR(20) =
+        REPLACE(
+            TRANSLATE(
+                ISNULL(@RawPhone, ''),
+                ' ()-.+abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+                '                                                          '
+            ),
+            ' ', ''
+        );
 
-    -- Strip non-numeric characters
-    SET @CleanPhone = @RawPhone;
-    WHILE PATINDEX('%[^0-9]%', @CleanPhone) > 0
-        SET @CleanPhone = STUFF(@CleanPhone, PATINDEX('%[^0-9]%', @CleanPhone), 1, '');
-
-    IF LEN(@CleanPhone) = 10
-        SET @Formatted = '(' + LEFT(@CleanPhone, 3) + ') ' +
-                          SUBSTRING(@CleanPhone, 4, 3) + '-' +
-                          RIGHT(@CleanPhone, 4);
-    ELSE IF LEN(@CleanPhone) = 11
-        SET @Formatted = '+' + LEFT(@CleanPhone, 1) + ' (' +
-                          SUBSTRING(@CleanPhone, 2, 3) + ') ' +
-                          SUBSTRING(@CleanPhone, 5, 3) + '-' +
-                          RIGHT(@CleanPhone, 4);
-    ELSE
-        SET @Formatted = @CleanPhone;
-
-    RETURN @Formatted;
-END;
-GO
-
--- --------------------------------------------------------------------------
--- 2. fn_ParseTruckConfigJSON — scalar UDF
---    Converted from multi-statement TVF to scalar. Returns the count of
---    operational equipment items declared in the truck's JSON config.
---    Returns 0 when TruckConfig is NULL or the truck does not exist.
--- --------------------------------------------------------------------------
-CREATE FUNCTION TastyBytes.fn_ParseTruckConfigJSON
-(
-    @TruckID INT
-)
-RETURNS INT
-AS
-BEGIN
-    DECLARE @EquipmentCount INT;
-
-    SELECT @EquipmentCount = COUNT(*)
-    FROM TastyBytes.FoodTruck ft
-    CROSS APPLY OPENJSON(ft.TruckConfig, '$.Equipment') e
-    WHERE ft.TruckID = @TruckID
-      AND ft.TruckConfig IS NOT NULL
-      AND CAST(JSON_VALUE(e.value, '$.IsOperational') AS BIT) = 1;
-
-    RETURN ISNULL(@EquipmentCount, 0);
+    RETURN CASE LEN(@CleanPhone)
+        WHEN 10 THEN '(' + LEFT(@CleanPhone, 3) + ') ' +
+                     SUBSTRING(@CleanPhone, 4, 3) + '-' +
+                     RIGHT(@CleanPhone, 4)
+        WHEN 11 THEN '+' + LEFT(@CleanPhone, 1) + ' (' +
+                     SUBSTRING(@CleanPhone, 2, 3) + ') ' +
+                     SUBSTRING(@CleanPhone, 5, 3) + '-' +
+                     RIGHT(@CleanPhone, 4)
+        ELSE @CleanPhone
+    END;
 END;
 GO
 
@@ -376,35 +348,33 @@ GO
 
 -- --------------------------------------------------------------------------
 -- 1. sp_UpdateInventory
---    Restocks inventory items at/below ReorderLevel for a given truck.
---    Returns ItemsRestocked = count of rows updated.
---    Optional @AsOf parameter makes LastRestocked deterministic for testing.
+--    Restocks inventory for a truck. Caller passes the stock count and a
+--    flag controlling how it is applied:
+--      * @Override = 1 — sets QuantityOnHand to @StockCount.
+--      * @Override = 0 — adds @StockCount to the existing QuantityOnHand.
+--    Returns no result set.
 -- --------------------------------------------------------------------------
 CREATE PROCEDURE TastyBytes.sp_UpdateInventory
-    @TruckID  INT      = NULL,
-    @AsOf     DATETIME = NULL
+    @TruckID     INT            = NULL,
+    @StockCount  DECIMAL(10, 2) = 0,
+    @Override    BIT            = 1
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @RestockCount INT = 0;
-
-    -- Short-circuit on NULL so the predicate never relies on UNKNOWN semantics
     IF @TruckID IS NULL
-    BEGIN
-        SELECT 0 AS ItemsRestocked;
         RETURN;
-    END
 
-    UPDATE TastyBytes.Inventory
-    SET QuantityOnHand = ReorderLevel * 2,
-        LastRestocked  = COALESCE(@AsOf, GETDATE())
-    WHERE TruckID       = @TruckID
-      AND QuantityOnHand <= ReorderLevel;
-
-    SET @RestockCount = @@ROWCOUNT;
-
-    SELECT @RestockCount AS ItemsRestocked;
+    IF @Override = 1
+        UPDATE TastyBytes.Inventory
+        SET QuantityOnHand = @StockCount,
+            LastRestocked  = GETDATE()
+        WHERE TruckID = @TruckID;
+    ELSE
+        UPDATE TastyBytes.Inventory
+        SET QuantityOnHand = QuantityOnHand + @StockCount,
+            LastRestocked  = GETDATE()
+        WHERE TruckID = @TruckID;
 END;
 GO
 
