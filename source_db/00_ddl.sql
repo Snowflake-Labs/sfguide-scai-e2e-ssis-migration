@@ -225,8 +225,7 @@ CREATE TABLE TastyBytes.Inventory (
     QuantityOnHand  DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     UnitOfMeasure   VARCHAR(20) NOT NULL,
     ReorderLevel    DECIMAL(10,2) NOT NULL DEFAULT 10.00,
-    SupplierNotes   NVARCHAR(500) SPARSE NULL,
-    LastRestocked   DATETIME NULL
+    SupplierNotes   NVARCHAR(500) SPARSE NULL
 );
 GO
 
@@ -310,35 +309,29 @@ GO
 -- ============================================================================
 
 -- --------------------------------------------------------------------------
--- 1. fn_FormatPhoneNumber — simpler: TRANSLATE strips non-digits in one pass.
+-- 1. fn_FormatCustomerName — simple scalar UDF.
+--    Takes a CustomerID, looks up the row in TastyBytes.Customer, and
+--    returns "LASTNAME, Firstname" (last name uppercased, first name trimmed).
+--    Uses only built-ins available in both SQL Server and Snowflake:
+--    UPPER, LTRIM, RTRIM, ISNULL/COALESCE, string concatenation.
 -- --------------------------------------------------------------------------
-CREATE FUNCTION TastyBytes.fn_FormatPhoneNumber
+CREATE FUNCTION TastyBytes.fn_FormatCustomerName
 (
-    @RawPhone VARCHAR(20)
+    @CustomerID INT
 )
-RETURNS VARCHAR(20)
+RETURNS VARCHAR(220)
 AS
 BEGIN
-    DECLARE @CleanPhone VARCHAR(20) =
-        REPLACE(
-            TRANSLATE(
-                ISNULL(@RawPhone, ''),
-                ' ()-.+abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
-                '                                                          '
-            ),
-            ' ', ''
-        );
+    DECLARE @FullName VARCHAR(220);
 
-    RETURN CASE LEN(@CleanPhone)
-        WHEN 10 THEN '(' + LEFT(@CleanPhone, 3) + ') ' +
-                     SUBSTRING(@CleanPhone, 4, 3) + '-' +
-                     RIGHT(@CleanPhone, 4)
-        WHEN 11 THEN '+' + LEFT(@CleanPhone, 1) + ' (' +
-                     SUBSTRING(@CleanPhone, 2, 3) + ') ' +
-                     SUBSTRING(@CleanPhone, 5, 3) + '-' +
-                     RIGHT(@CleanPhone, 4)
-        ELSE @CleanPhone
-    END;
+    SELECT @FullName =
+        UPPER(RTRIM(LTRIM(ISNULL(LastName, '')))) +
+        ', ' +
+        RTRIM(LTRIM(ISNULL(FirstName, '')))
+    FROM TastyBytes.Customer
+    WHERE CustomerID = @CustomerID;
+
+    RETURN @FullName;
 END;
 GO
 
@@ -367,13 +360,11 @@ BEGIN
 
     IF @Override = 1
         UPDATE TastyBytes.Inventory
-        SET QuantityOnHand = @StockCount,
-            LastRestocked  = GETDATE()
+        SET QuantityOnHand = @StockCount
         WHERE TruckID = @TruckID;
     ELSE
         UPDATE TastyBytes.Inventory
-        SET QuantityOnHand = QuantityOnHand + @StockCount,
-            LastRestocked  = GETDATE()
+        SET QuantityOnHand = QuantityOnHand + @StockCount
         WHERE TruckID = @TruckID;
 END;
 GO
