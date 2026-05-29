@@ -69,11 +69,11 @@ GO
 
 -- --------------------------------------------------------------------------
 -- 1. Country
---    EWI triggers: TS0077 (collation), FDM-TS0014 (computed column)
+--    EWI triggers: FDM-TS0014 (computed column)
 -- --------------------------------------------------------------------------
 CREATE TABLE TastyBytes.Country (
     CountryID       INT IDENTITY(1,1),
-    CountryName     NVARCHAR(100) COLLATE Albanian_BIN NOT NULL,
+    CountryName     NVARCHAR(100) NOT NULL,
     CountryCode     CHAR(3) NOT NULL,
     CurrencyCode    CHAR(3) NOT NULL,
     TaxRate         DECIMAL(5,2) NOT NULL DEFAULT 0.00,
@@ -317,19 +317,19 @@ GO
 -- --------------------------------------------------------------------------
 CREATE FUNCTION TastyBytes.fn_FormatCustomerName
 (
-    @CustomerID INT
+    @P_CustomerID INT
 )
-RETURNS VARCHAR(220)
+RETURNS NVARCHAR(202)
 AS
 BEGIN
-    DECLARE @FullName VARCHAR(220);
+    DECLARE @FullName NVARCHAR(202);
 
     SELECT @FullName =
         UPPER(RTRIM(LTRIM(ISNULL(LastName, '')))) +
         ', ' +
         RTRIM(LTRIM(ISNULL(FirstName, '')))
     FROM TastyBytes.Customer
-    WHERE CustomerID = @CustomerID;
+    WHERE CustomerID = @P_CustomerID;
 
     RETURN @FullName;
 END;
