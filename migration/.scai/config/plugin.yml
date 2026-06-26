@@ -1,0 +1,93 @@
+entry_mode: fresh
+tasks:
+  applyRules:
+    enabled: true
+  captureBaseline:
+    enabled: true
+    locked: true
+  chooseEntryMode:
+    enabled: true
+  chooseExtractionStrategyRedshift:
+    enabled: true
+  chooseExtractionStrategyRouter:
+    enabled: true
+  chooseExtractionStrategyTeradata:
+    enabled: true
+  chooseIncrementalSyncRouter:
+    enabled: true
+  chooseMigrationType:
+    enabled: true
+  chooseSourceDialect:
+    enabled: true
+  chooseSyncStrategy:
+    enabled: true
+  chooseSyncStrategyOracle:
+    enabled: true
+  chooseTargetTableType:
+    enabled: true
+  configureGit:
+    enabled: true
+  configureProjectDir:
+    enabled: true
+    locked: true
+  configureSnowflakeConnection:
+    enabled: true
+    locked: true
+  configureSourceConnection:
+    enabled: true
+    skipped: true
+  convert:
+    enabled: true
+    locked: true
+  convertCode:
+    enabled: true
+    locked: true
+  createTests:
+    enabled: true
+  deploy:
+    enabled: true
+    locked: true
+  enableDashboard:
+    enabled: true
+  etlStabilization:
+    enabled: true
+    locked: true
+  extractRules:
+    enabled: true
+  fixCode:
+    enabled: true
+    locked: true
+  midwayEntry:
+    enabled: true
+    locked: true
+  migrateData:
+    enabled: true
+  recommendSafeTools:
+    enabled: true
+  registerCode:
+    enabled: true
+    locked: true
+  registration:
+    enabled: true
+    locked: true
+  runAssessment:
+    enabled: true
+  runTests:
+    enabled: true
+  seedSourceDb:
+    enabled: true
+  seedSynthetic:
+    enabled: true
+    locked: true
+  setupComplete:
+    enabled: true
+  validateData:
+    enabled: true
+  validateView:
+    enabled: true
+git_main_branch: main
+dashboard_port: 7878
+git_remote_name: origin
+snowflake_database: TASTYBYTESDB
+cortex_safe_tools_acknowledged: 'true'
+git_remote_url: https://github.com/Snowflake-Labs/sfguide-scai-e2e-ssis-migration.git

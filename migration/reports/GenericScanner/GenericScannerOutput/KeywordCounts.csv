@@ -1,0 +1,234 @@
+File,Technology,Keyword,Count
+/tastybytesdb/dbo/unknown_type/00_ddl.sql,SQL,print,1
+/tastybytesdb/tastybytes/tastybytes.sql,SQL,create schema,1
+/tastybytesdb/tastybytes/tastybytes.sql,SQL,go,1
+/tastybytesdb/tastybytes/tastybytes.sql,SQL,use,1
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,=,2
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,as,2
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,begin,1
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,cast,1
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,create function,1
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,declare,1
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,end,1
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,from,1
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,go,1
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,int,1
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,isnull,2
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,ltrim,2
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,nvarchar,3
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,return,1
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,returns,1
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,rtrim,2
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,select,1
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,upper,1
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,use,1
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,where,1
+/tastybytesdb/tastybytes/function/fn_formatcustomername.sql,SQL,+,2
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,=,8
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,as,1
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,begin,1
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,bit,1
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,create procedure,1
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,decimal,1
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,else,1
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,end,1
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,go,1
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,if,2
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,int,1
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,is null,1
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,null,1
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,on,1
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,return,1
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,set,3
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,update,2
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,use,1
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,where,2
+/tastybytesdb/tastybytes/procedure/sp_updateinventory.sql,SQL,+,1
+/tastybytesdb/tastybytes/table/customer.sql,SQL,bit,1
+/tastybytesdb/tastybytes/table/customer.sql,SQL,create table,1
+/tastybytesdb/tastybytes/table/customer.sql,SQL,date,1
+/tastybytesdb/tastybytes/table/customer.sql,SQL,datetime,2
+/tastybytesdb/tastybytes/table/customer.sql,SQL,default,5
+/tastybytesdb/tastybytes/table/customer.sql,SQL,getdate,2
+/tastybytesdb/tastybytes/table/customer.sql,SQL,go,1
+/tastybytesdb/tastybytes/table/customer.sql,SQL,identity,1
+/tastybytesdb/tastybytes/table/customer.sql,SQL,int,3
+/tastybytesdb/tastybytes/table/customer.sql,SQL,newid,1
+/tastybytesdb/tastybytes/table/customer.sql,SQL,not null,7
+/tastybytesdb/tastybytes/table/customer.sql,SQL,null,4
+/tastybytesdb/tastybytes/table/customer.sql,SQL,nvarchar,2
+/tastybytesdb/tastybytes/table/customer.sql,SQL,uniqueidentifier,1
+/tastybytesdb/tastybytes/table/customer.sql,SQL,use,1
+/tastybytesdb/tastybytes/table/customer.sql,SQL,varchar,2
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,bit,1
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,create table,1
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,datetime,2
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,default,4
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,getdate,1
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,go,1
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,identity,1
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,int,4
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,max,1
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,newid,1
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,not null,7
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,null,3
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,nvarchar,2
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,rowguidcol,1
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,uniqueidentifier,1
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,use,1
+/tastybytesdb/tastybytes/table/foodtruck.sql,SQL,varchar,1
+/tastybytesdb/tastybytes/table/menu.sql,SQL,bit,1
+/tastybytesdb/tastybytes/table/menu.sql,SQL,create table,1
+/tastybytesdb/tastybytes/table/menu.sql,SQL,date,2
+/tastybytesdb/tastybytes/table/menu.sql,SQL,datetime,1
+/tastybytesdb/tastybytes/table/menu.sql,SQL,default,4
+/tastybytesdb/tastybytes/table/menu.sql,SQL,getdate,2
+/tastybytesdb/tastybytes/table/menu.sql,SQL,go,1
+/tastybytesdb/tastybytes/table/menu.sql,SQL,identity,1
+/tastybytesdb/tastybytes/table/menu.sql,SQL,int,2
+/tastybytesdb/tastybytes/table/menu.sql,SQL,money,1
+/tastybytesdb/tastybytes/table/menu.sql,SQL,not null,7
+/tastybytesdb/tastybytes/table/menu.sql,SQL,ntext,1
+/tastybytesdb/tastybytes/table/menu.sql,SQL,null,2
+/tastybytesdb/tastybytes/table/menu.sql,SQL,nvarchar,2
+/tastybytesdb/tastybytes/table/menu.sql,SQL,use,1
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,as,2
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,bit,3
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,cast,1
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,create table,1
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,datetime,1
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,decimal,1
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,default,4
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,getdate,1
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,go,1
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,identity,1
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,int,3
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,max,1
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,money,1
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,not null,7
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,null,2
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,nvarchar,2
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,rowversion,1
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,use,1
+/tastybytesdb/tastybytes/table/menuitem.sql,SQL,*,1
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,as,1
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,create table,1
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,date,1
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,datediff,1
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,datetime,3
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,default,2
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,getdate,1
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,go,1
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,identity,1
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,int,2
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,minute,1
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,not null,8
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,nvarchar,1
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,role,1
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,smallmoney,1
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,use,1
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,varchar,1
+/tastybytesdb/tastybytes/table/employeeshift.sql,SQL,/,1
+/tastybytesdb/tastybytes/table/orderdetail.sql,SQL,as,2
+/tastybytesdb/tastybytes/table/orderdetail.sql,SQL,cast,1
+/tastybytesdb/tastybytes/table/orderdetail.sql,SQL,create table,1
+/tastybytesdb/tastybytes/table/orderdetail.sql,SQL,decimal,1
+/tastybytesdb/tastybytes/table/orderdetail.sql,SQL,default,2
+/tastybytesdb/tastybytes/table/orderdetail.sql,SQL,go,1
+/tastybytesdb/tastybytes/table/orderdetail.sql,SQL,int,4
+/tastybytesdb/tastybytes/table/orderdetail.sql,SQL,not null,6
+/tastybytesdb/tastybytes/table/orderdetail.sql,SQL,null,1
+/tastybytesdb/tastybytes/table/orderdetail.sql,SQL,nvarchar,1
+/tastybytesdb/tastybytes/table/orderdetail.sql,SQL,smallmoney,2
+/tastybytesdb/tastybytes/table/orderdetail.sql,SQL,use,1
+/tastybytesdb/tastybytes/table/orderdetail.sql,SQL,*,1
+/tastybytesdb/tastybytes/table/orderdetail.sql,SQL,-,1
+/tastybytesdb/tastybytes/table/inventory.sql,SQL,create table,1
+/tastybytesdb/tastybytes/table/inventory.sql,SQL,decimal,2
+/tastybytesdb/tastybytes/table/inventory.sql,SQL,default,2
+/tastybytesdb/tastybytes/table/inventory.sql,SQL,go,1
+/tastybytesdb/tastybytes/table/inventory.sql,SQL,identity,1
+/tastybytesdb/tastybytes/table/inventory.sql,SQL,int,2
+/tastybytesdb/tastybytes/table/inventory.sql,SQL,not null,5
+/tastybytesdb/tastybytes/table/inventory.sql,SQL,null,1
+/tastybytesdb/tastybytes/table/inventory.sql,SQL,nvarchar,2
+/tastybytesdb/tastybytes/table/inventory.sql,SQL,use,1
+/tastybytesdb/tastybytes/table/inventory.sql,SQL,varchar,1
+/tastybytesdb/tastybytes/table/city.sql,SQL,create table,1
+/tastybytesdb/tastybytes/table/city.sql,SQL,datetime,1
+/tastybytesdb/tastybytes/table/city.sql,SQL,decimal,2
+/tastybytesdb/tastybytes/table/city.sql,SQL,default,1
+/tastybytesdb/tastybytes/table/city.sql,SQL,getdate,1
+/tastybytesdb/tastybytes/table/city.sql,SQL,go,1
+/tastybytesdb/tastybytes/table/city.sql,SQL,identity,1
+/tastybytesdb/tastybytes/table/city.sql,SQL,int,3
+/tastybytesdb/tastybytes/table/city.sql,SQL,not null,3
+/tastybytesdb/tastybytes/table/city.sql,SQL,null,4
+/tastybytesdb/tastybytes/table/city.sql,SQL,nvarchar,2
+/tastybytesdb/tastybytes/table/city.sql,SQL,use,1
+/tastybytesdb/tastybytes/table/country.sql,SQL,as,1
+/tastybytesdb/tastybytes/table/country.sql,SQL,bit,1
+/tastybytesdb/tastybytes/table/country.sql,SQL,char,2
+/tastybytesdb/tastybytes/table/country.sql,SQL,create table,1
+/tastybytesdb/tastybytes/table/country.sql,SQL,datetime,2
+/tastybytesdb/tastybytes/table/country.sql,SQL,decimal,1
+/tastybytesdb/tastybytes/table/country.sql,SQL,default,3
+/tastybytesdb/tastybytes/table/country.sql,SQL,getdate,1
+/tastybytesdb/tastybytes/table/country.sql,SQL,go,1
+/tastybytesdb/tastybytes/table/country.sql,SQL,identity,1
+/tastybytesdb/tastybytes/table/country.sql,SQL,int,1
+/tastybytesdb/tastybytes/table/country.sql,SQL,not null,6
+/tastybytesdb/tastybytes/table/country.sql,SQL,null,1
+/tastybytesdb/tastybytes/table/country.sql,SQL,nvarchar,1
+/tastybytesdb/tastybytes/table/country.sql,SQL,use,1
+/tastybytesdb/tastybytes/table/country.sql,SQL,+,2
+/tastybytesdb/tastybytes/table/orderheader.sql,SQL,create table,1
+/tastybytesdb/tastybytes/table/orderheader.sql,SQL,datetime,4
+/tastybytesdb/tastybytes/table/orderheader.sql,SQL,default,5
+/tastybytesdb/tastybytes/table/orderheader.sql,SQL,getdate,2
+/tastybytesdb/tastybytes/table/orderheader.sql,SQL,go,1
+/tastybytesdb/tastybytes/table/orderheader.sql,SQL,identity,1
+/tastybytesdb/tastybytes/table/orderheader.sql,SQL,int,3
+/tastybytesdb/tastybytes/table/orderheader.sql,SQL,money,2
+/tastybytesdb/tastybytes/table/orderheader.sql,SQL,not null,6
+/tastybytesdb/tastybytes/table/orderheader.sql,SQL,null,5
+/tastybytesdb/tastybytes/table/orderheader.sql,SQL,nvarchar,1
+/tastybytesdb/tastybytes/table/orderheader.sql,SQL,use,1
+/tastybytesdb/tastybytes/table/orderheader.sql,SQL,varchar,2
+/tastybytesdb/tastybytes/view/vw_topsellingitems.sql,SQL,=,3
+/tastybytesdb/tastybytes/view/vw_topsellingitems.sql,SQL,as,4
+/tastybytesdb/tastybytes/view/vw_topsellingitems.sql,SQL,create view,1
+/tastybytesdb/tastybytes/view/vw_topsellingitems.sql,SQL,from,3
+/tastybytesdb/tastybytes/view/vw_topsellingitems.sql,SQL,go,1
+/tastybytesdb/tastybytes/view/vw_topsellingitems.sql,SQL,group by,1
+/tastybytesdb/tastybytes/view/vw_topsellingitems.sql,SQL,inner join,2
+/tastybytesdb/tastybytes/view/vw_topsellingitems.sql,SQL,on,2
+/tastybytesdb/tastybytes/view/vw_topsellingitems.sql,SQL,select,3
+/tastybytesdb/tastybytes/view/vw_topsellingitems.sql,SQL,sum,2
+/tastybytesdb/tastybytes/view/vw_topsellingitems.sql,SQL,union,1
+/tastybytesdb/tastybytes/view/vw_topsellingitems.sql,SQL,use,1
+/tastybytesdb/tastybytes/view/vw_topsellingitems.sql,SQL,where,1
+/tastybytesdb/tastybytes/view/vw_topsellingitems.sql,SQL,with,1
+/tastybytesdb/tastybytes/view/vw_topsellingitems.sql,SQL,*,1
+/tastybytesdb/etl_results/etl_results.sql,SQL,create schema,1
+/tastybytesdb/etl_results/etl_results.sql,SQL,go,1
+/tastybytesdb/etl_results/etl_results.sql,SQL,use,1
+/tastybytesdb/etl_results/table/etl_logs.sql,SQL,create table,1
+/tastybytesdb/etl_results/table/etl_logs.sql,SQL,datetime,1
+/tastybytesdb/etl_results/table/etl_logs.sql,SQL,go,1
+/tastybytesdb/etl_results/table/etl_logs.sql,SQL,identity,1
+/tastybytesdb/etl_results/table/etl_logs.sql,SQL,int,1
+/tastybytesdb/etl_results/table/etl_logs.sql,SQL,name,1
+/tastybytesdb/etl_results/table/etl_logs.sql,SQL,not null,2
+/tastybytesdb/etl_results/table/etl_logs.sql,SQL,nvarchar,1
+/tastybytesdb/etl_results/table/etl_logs.sql,SQL,use,1
+/master/dbo/unknown_type/00_ddl.sql,SQL,alter database,1
+/master/dbo/unknown_type/00_ddl.sql,SQL,create database,1
+/master/dbo/unknown_type/00_ddl.sql,SQL,drop database,1
+/master/dbo/unknown_type/00_ddl.sql,SQL,go,1
+/master/dbo/unknown_type/00_ddl.sql,SQL,immediate,1
+/master/dbo/unknown_type/00_ddl.sql,SQL,master,1
+/master/dbo/unknown_type/00_ddl.sql,SQL,rollback,1
+/master/dbo/unknown_type/00_ddl.sql,SQL,set,1
+/master/dbo/unknown_type/00_ddl.sql,SQL,use,1
+/master/dbo/unknown_type/00_ddl.sql,SQL,with,1
