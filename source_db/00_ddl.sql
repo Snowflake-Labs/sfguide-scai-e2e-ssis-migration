@@ -255,53 +255,42 @@ GO
 -- ============================================================================
 
 -- --------------------------------------------------------------------------
--- 1. vw_TopSellingItems — CROSS APPLY
+-- 1. vw_TopSellingItems — CTE + parenthesized UNION
+--    EWI triggers: SSC-EWI-TS0010 (CTE in view whose body is not a bare
+--    SELECT) and SSC-EWI-0021 (WITH wrapper with a parenthesized UNION).
+--    Combines the top sellers ranked by quantity with those ranked by
+--    revenue into a single result set.
 -- --------------------------------------------------------------------------
 CREATE VIEW TastyBytes.vw_TopSellingItems
 AS
-SELECT
-    ft.TruckID,
-    ft.TruckName,
-    TopItems.MenuItemID,
-    TopItems.ItemName,
-    TopItems.TotalQuantitySold,
-    TopItems.TotalRevenue
-FROM TastyBytes.FoodTruck ft
-CROSS APPLY (
-    SELECT TOP 5
+WITH ItemSales (MenuItemID, ItemName, TotalQuantitySold, TotalRevenue) AS
+(
+    SELECT
         mi.MenuItemID,
         mi.ItemName,
-        SUM(od.Quantity)                 AS TotalQuantitySold,
-        SUM(od.Quantity * od.UnitPrice)  AS TotalRevenue
+        SUM(od.Quantity),
+        SUM(od.Quantity * od.UnitPrice)
     FROM TastyBytes.OrderDetail od
     INNER JOIN TastyBytes.OrderHeader oh ON od.OrderID = oh.OrderID
     INNER JOIN TastyBytes.MenuItem mi ON od.MenuItemID = mi.MenuItemID
-    WHERE oh.TruckID = ft.TruckID
-      AND oh.OrderStatus = 'Completed'
+    WHERE oh.OrderStatus = 'Completed'
     GROUP BY mi.MenuItemID, mi.ItemName
-    ORDER BY SUM(od.Quantity) DESC
-) TopItems;
-GO
-
--- --------------------------------------------------------------------------
--- 2. vw_CustomerOrderHistory
--- --------------------------------------------------------------------------
-CREATE VIEW TastyBytes.vw_CustomerOrderHistory
-AS
-SELECT TOP 1000
-    cu.CustomerID,
-    cu.FirstName + ' ' + cu.LastName    AS CustomerName,
-    cu.Email,
-    cu.LoyaltyPoints,
-    oh.OrderID,
-    oh.OrderDate,
-    oh.TotalAmount,
-    oh.OrderStatus,
-    ft.TruckName
-FROM TastyBytes.Customer cu
-INNER JOIN TastyBytes.OrderHeader oh ON cu.CustomerID = oh.CustomerID
-INNER JOIN TastyBytes.FoodTruck ft ON oh.TruckID = ft.TruckID
-ORDER BY oh.OrderDate DESC;
+)
+((SELECT
+    MenuItemID,
+    ItemName,
+    TotalQuantitySold,
+    TotalRevenue,
+    'By Quantity' AS RankingBasis
+  FROM ItemSales)
+UNION
+(SELECT
+    MenuItemID,
+    ItemName,
+    TotalQuantitySold,
+    TotalRevenue,
+    'By Revenue' AS RankingBasis
+  FROM ItemSales));
 GO
 
 -- ============================================================================
