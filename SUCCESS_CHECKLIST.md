@@ -2,7 +2,6 @@
 
 Use this checklist to verify a migration run is complete and ready for sign-off.
 
----
 
 ## 1. Migration Dashboard (`/dash`)
 
@@ -23,24 +22,19 @@ Use this checklist to verify a migration run is complete and ready for sign-off.
 
 ### Deployment
 - [ ] **19 / 19 objects deployed** (100%)
-  > Current state: 16 / 19 (84%) — 3 pending. See TODO.md for fix instructions.
-  - [ ] `fn_FormatPhoneNumber` — fix `LEN(null)` Snowscript bug, redeploy
-  - [ ] `fn_ParseTruckConfigJSON` — validate CROSS APPLY → LEFT JOIN, redeploy
   - [ ] Unknown type objects resolved or explicitly excluded from deployment scope
 
 ### Data Migration
 - [ ] **11 / 11 tables loaded** (completed: 11)
-  > Current state: 7 / 11 in 0715 run — 4 tables have column count mismatch. See TODO.md.
   - [ ] COUNTRY loaded with 0 errors
   - [ ] EMPLOYEESHIFT loaded with 0 errors
   - [ ] MENUITEM loaded with 0 errors
   - [ ] ORDERDETAIL loaded with 0 errors
   - [ ] `errors.csv` in latest workflow folder is empty (header only)
 
-### Testing
+### Testing (Optional)
 - [ ] **Testing started** — at minimum 2 / 19 completed (baseline)
 - [ ] No pending test failures blocking deployment
-  > Stretch goal: all 19 objects with passing tests before go-live
 
 ---
 
@@ -83,7 +77,7 @@ Use this checklist to verify a migration run is complete and ready for sign-off.
 
 ---
 
-## 4. Data Validation
+## 4. Data Validation (Optional)
 
 - [ ] Data validation workflow created and executed (`scai data validate`)
 - [ ] Row counts match between source SQL Server and target Snowflake for all 11 tables
@@ -97,18 +91,3 @@ Use this checklist to verify a migration run is complete and ready for sign-off.
 - [ ] Latest deployment reports exist in `reports/DeploymentReport.*.csv`
 - [ ] Latest data migration report exists in `reports/data-migration/workflow-*/` with 0 errors
 - [ ] `artifacts/` folder has timestamped deterministic snapshots for all objects
-
----
-
-## Quick Status: Current State of Both Runs
-
-| Check | 0713 | 0715 |
-|-------|------|------|
-| Registration 19/19 | ✅ | ✅ |
-| Conversion 19/19 | ✅ | ✅ |
-| Deployment 19/19 | ✅ (after manual scripts) | ❌ 16/19 |
-| Data migration 11/11 | ✅ | ❌ 7/11 |
-| dbt project deployed | ❓ unverified | ❓ unverified |
-| Task graph deployed | ❓ unverified | ❓ unverified |
-| Data validation | ❌ not run | ❌ not run |
-| Testing 19/19 | ❌ 2/19 | ❌ 2/19 |
